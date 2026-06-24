@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from PIL import Image
 from torchvision import datasets, transforms
 
 
@@ -46,9 +45,8 @@ class CNN(nn.Module):
         x
     ):
 
-        return self.network(
-            x
-        )
+        return self.network(x)
+
 
 
 # TRANSFORM
@@ -83,6 +81,7 @@ dataset = datasets.ImageFolder(
 classes = dataset.classes
 
 
+
 # LOAD MODEL
 model = CNN()
 
@@ -102,13 +101,10 @@ model.eval()
 
 
 
-# -------- PREDICT FUNCTION --------
+# PREDICT FUNCTION
+def predict(image):
 
-def predict(file):
-
-    image = Image.open(
-        file
-    ).convert(
+    image = image.convert(
         "RGB"
     )
 
@@ -131,22 +127,13 @@ def predict(file):
             dim=1
         )
 
-        confidence,prediction = torch.max(
+        confidence, prediction = torch.max(
             probs,
             dim=1
         )
 
-    return {
+    return f"""
+Prediction: {classes[prediction.item()]}
 
-        "prediction":
-        classes[
-            prediction.item()
-        ],
-
-        "confidence":
-        round(
-            confidence.item(),
-            3
-        )
-
-    }
+Confidence: {round(confidence.item()*100,2)}%
+"""
