@@ -2,10 +2,13 @@ import torch
 import torch.nn as nn
 from PIL import Image
 from torchvision import datasets, transforms
+
+
 # MODEL
 class CNN(nn.Module):
 
     def __init__(self):
+
         super().__init__()
 
         self.network = nn.Sequential(
@@ -24,20 +27,39 @@ class CNN(nn.Module):
 
             nn.Flatten(),
 
-            nn.Linear(64*8*8,128),
+            nn.Linear(
+                64*8*8,
+                128
+            ),
+
             nn.ReLU(),
 
-            nn.Linear(128,2)
+            nn.Linear(
+                128,
+                2
+            )
 
         )
 
-    def forward(self,x):
-        return self.network(x)
+    def forward(
+        self,
+        x
+    ):
 
-# SAME TRANSFORM AS TRAINING
+        return self.network(
+            x
+        )
+
+
+# TRANSFORM
 transform = transforms.Compose([
 
-    transforms.Resize((64,64)),
+    transforms.Resize(
+        (
+            64,
+            64
+        )
+    ),
 
     transforms.ToTensor(),
 
@@ -47,48 +69,84 @@ transform = transforms.Compose([
     )
 
 ])
-# LOAD CLASSES FROM IMAGEFOLDER
-dataset = datasets.ImageFolder(root=r"C:\Users\mathu\OneDrive\Desktop\deep learning\archive (2)\train",transform=transform)
+
+
+# LOAD CLASSES
+dataset = datasets.ImageFolder(
+
+    root=r"C:\Users\mathu\OneDrive\Desktop\deep learning\archive (2)\train",
+
+    transform=transform
+
+)
+
 classes = dataset.classes
+
 
 # LOAD MODEL
 model = CNN()
+
 model.load_state_dict(
+
     torch.load(
+
         r"C:\Users\mathu\OneDrive\Desktop\deep learning\cnn.pth",
+
         map_location="cpu"
+
     )
+
 )
+
 model.eval()
-# LOAD IMAGE
-image = Image.open(
-   r"C:\Users\mathu\OneDrive\Desktop\deep learning\archive (2)\PRC_142435379.webp").convert("RGB")
 
-image = transform(image)
 
-# ADD BATCH DIMENSION
-image = image.unsqueeze(0)
 
-# INFERENCE
-with torch.no_grad():
+# -------- PREDICT FUNCTION --------
 
-    output = model(image)
+def predict(file):
 
-    prediction = torch.argmax(
-        output,
-        dim=1
+    image = Image.open(
+        file
+    ).convert(
+        "RGB"
     )
-# RESULT
-predicted_class = prediction.item()
 
-print("\nRaw Output:", output)
+    image = transform(
+        image
+    )
 
-print(
-    "\nPredicted Index:",
-    predicted_class
-)
+    image = image.unsqueeze(
+        0
+    )
 
-print(
-    "\nPredicted Class:",
-    classes[predicted_class]
-)
+    with torch.no_grad():
+
+        output = model(
+            image
+        )
+
+        probs = torch.softmax(
+            output,
+            dim=1
+        )
+
+        confidence,prediction = torch.max(
+            probs,
+            dim=1
+        )
+
+    return {
+
+        "prediction":
+        classes[
+            prediction.item()
+        ],
+
+        "confidence":
+        round(
+            confidence.item(),
+            3
+        )
+
+    }
