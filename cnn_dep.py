@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from torchvision import datasets, transforms
+from PIL import Image
+from torchvision import transforms
 
 
 # MODEL
@@ -12,22 +13,49 @@ class CNN(nn.Module):
 
         self.network = nn.Sequential(
 
-            nn.Conv2d(3,16,3,padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
+            nn.Conv2d(
+                3,
+                16,
+                3,
+                padding=1
+            ),
 
-            nn.Conv2d(16,32,3,padding=1),
             nn.ReLU(),
-            nn.MaxPool2d(2),
 
-            nn.Conv2d(32,64,3,padding=1),
+            nn.MaxPool2d(
+                2
+            ),
+
+            nn.Conv2d(
+                16,
+                32,
+                3,
+                padding=1
+            ),
+
             nn.ReLU(),
-            nn.MaxPool2d(2),
+
+            nn.MaxPool2d(
+                2
+            ),
+
+            nn.Conv2d(
+                32,
+                64,
+                3,
+                padding=1
+            ),
+
+            nn.ReLU(),
+
+            nn.MaxPool2d(
+                2
+            ),
 
             nn.Flatten(),
 
             nn.Linear(
-                64*8*8,
+                64 * 8 * 8,
                 128
             ),
 
@@ -49,7 +77,7 @@ class CNN(nn.Module):
 
 
 
-# TRANSFORM
+# IMAGE TRANSFORM
 transform = transforms.Compose([
 
     transforms.Resize(
@@ -62,24 +90,24 @@ transform = transforms.Compose([
     transforms.ToTensor(),
 
     transforms.Normalize(
-        [0.5,0.5,0.5],
-        [0.5,0.5,0.5]
+
+        [0.5, 0.5, 0.5],
+
+        [0.5, 0.5, 0.5]
+
     )
 
 ])
 
 
-# LOAD CLASSES
-dataset = datasets.ImageFolder(
+# CHANGE THESE TO YOUR REAL CLASS NAMES
+classes = [
 
-    root=r"C:\Users\mathu\OneDrive\Desktop\deep learning\archive (2)\train",
+    "class_1",
 
-    transform=transform
+    "class_2"
 
-)
-
-classes = dataset.classes
-
+]
 
 
 # LOAD MODEL
@@ -89,7 +117,7 @@ model.load_state_dict(
 
     torch.load(
 
-        r"C:\Users\mathu\OneDrive\Desktop\deep learning\cnn.pth",
+        "cnn.pth",
 
         map_location="cpu"
 
@@ -101,8 +129,17 @@ model.eval()
 
 
 
-# PREDICT FUNCTION
+# PREDICTION
 def predict(image):
+
+    if not isinstance(
+        image,
+        Image.Image
+    ):
+
+        image = Image.open(
+            image
+        )
 
     image = image.convert(
         "RGB"
@@ -123,13 +160,19 @@ def predict(image):
         )
 
         probs = torch.softmax(
+
             output,
+
             dim=1
+
         )
 
         confidence, prediction = torch.max(
+
             probs,
+
             dim=1
+
         )
 
     return f"""
